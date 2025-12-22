@@ -40,17 +40,31 @@ const getContextString = () => {
 export const aiService = {
   validateThinking: async (question, userInput) => {
     try {
-      const res = await fetch(`${API_URL}/predict`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question,
-          userInput,
-          context: getContextString()
-        })
-      });
-      const data = await res.json();
-      return data.message;
+      const context = getContextString();
+      const prompt = `
+Shanvi is learning Java DSA.
+She described her approach below.
+Respond like a calm teacher.
+
+Rules:
+- Start with encouragement
+- Say what part is correct (if any)
+- Point out one missing or incorrect idea gently
+- Do NOT give full solution
+- Do NOT write code
+- Keep response under 6 lines
+- Context: ${context || "None"}
+
+Question:
+${question}
+
+Shanvi's approach:
+${userInput}
+`;
+
+      const response = await window.puter.ai.chat(prompt, { model: 'gemini-2.5-flash' });
+      const text = response?.message?.content || response?.toString() || "";
+      return text.replace(/```json/g, '').replace(/```/g, '').trim();
     } catch (error) {
       console.error("AI Service Error:", error);
       return "I'm having trouble connecting to my brain right now.";
@@ -59,17 +73,28 @@ export const aiService = {
 
   explainConfusion: async (lessonTitle, stepContent) => {
     try {
-      const res = await fetch(`${API_URL}/confusion`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lessonTitle,
-          stepContent,
-          context: getContextString()
-        })
-      });
-      const data = await res.json();
-      return data.message;
+      const context = getContextString();
+      const prompt = `
+The learner Shanvi feels confused at this step.
+
+Rules:
+- Reassure first
+- Explain the core idea simply
+- Mention what she does NOT need to worry about yet
+- Avoid code unless absolutely needed
+- Keep response under 5 lines
+- Context: ${context || "None"}
+
+Lesson:
+${lessonTitle}
+
+Step content:
+${stepContent}
+`;
+
+      const response = await window.puter.ai.chat(prompt, { model: 'gemini-2.5-flash' });
+      const text = response?.message?.content || response?.toString() || "";
+      return text.replace(/```json/g, '').replace(/```/g, '').trim();
     } catch (error) {
       console.error("AI Service Error:", error);
       return "I'm having trouble connecting to my brain right now.";
